@@ -1,0 +1,236 @@
+@page "/voce/{CodiceVoce}"
+@inject PrezziarioOOEELombardia.Client.Services.PrezziarioApiClient ApiClient
+@inject NavigationManager NavigationManager
+@using PrezziarioOOEELombardia.Shared
+
+<PageTitle>Dettaglio Voce - Prezziario OOEE Lombardia</PageTitle>
+
+<div class="container-fluid mt-4">
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Caricamento...</span>
+            </div>
+            <p class="mt-2">Caricamento dettagli voce...</p>
+        </div>
+    }
+    else if (voce != null)
+    {
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="/search">Ricerca</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@voce.CodiceVoce</li>
+            </ol>
+        </nav>
+
+        <h2 class="mb-4">@voce.CodiceVoce</h2>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Informazioni Principali</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Prezzo:</strong>
+                                <span class="text-primary fs-4">€ @voce.PrezzoVoce.ToString("N2")</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Unità di Misura:</strong>
+                                <span class="badge bg-secondary fs-6">@voce.UnitaMisuraVoce</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Importo senza SGUI:</strong> € @voce.ImportoSenzaSguiVoce.ToString("N2")
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Rapporto RU:</strong> @voce.RapportoRUVoce.ToString("N2")
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(voce.TipologiaRisorsa))
+                        {
+                            <div class="mb-3">
+                                <strong>Tipologia Risorsa:</strong> @voce.TipologiaRisorsa
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Declaratoria</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>@voce.DeclaratoriaVoce</p>
+                        @if (!string.IsNullOrEmpty(voce.DeclaratoriaVoceDettaglio))
+                        {
+                            <hr />
+                            <p class="text-muted">@voce.DeclaratoriaVoceDettaglio</p>
+                        }
+                    </div>
+                </div>
+
+                @if (voce.Risorse.Any())
+                {
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Risorse (@voce.Risorse.Count)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Codifica</th>
+                                            <th>Descrizione</th>
+                                            <th>Tipologia</th>
+                                            <th class="text-end">Quantità</th>
+                                            <th class="text-end">Prezzo</th>
+                                            <th class="text-end">Importo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var risorsa in voce.Risorse)
+                                        {
+                                            <tr>
+                                                <td>@risorsa.CodificaRisorsa</td>
+                                                <td>@risorsa.DeclaratoriaRisorsa</td>
+                                                <td><span class="badge bg-info">@risorsa.TipologiaRisorsa</span></td>
+                                                <td class="text-end">@risorsa.QuantitaRisorsa.ToString("N3") @risorsa.UdmRisorsa</td>
+                                                <td class="text-end">€ @risorsa.PrezzoRisorsa.ToString("N2")</td>
+                                                <td class="text-end"><strong>€ @risorsa.ImportoRisorsa.ToString("N2")</strong></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="table-active">
+                                            <th colspan="5" class="text-end">Totale Risorse:</th>
+                                            <th class="text-end">€ @voce.Risorse.Sum(r => r.ImportoRisorsa).ToString("N2")</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Percorso Gerarchico</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            @if (!string.IsNullOrEmpty(voce.CodLiv1))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 1:</strong><br />
+                                    @voce.CodLiv1 - @voce.DescrLiv1
+                                </li>
+                            }
+                            @if (!string.IsNullOrEmpty(voce.CodLiv2))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 2:</strong><br />
+                                    @voce.CodLiv2 - @voce.DescrLiv2
+                                </li>
+                            }
+                            @if (!string.IsNullOrEmpty(voce.CodLiv3))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 3:</strong><br />
+                                    @voce.CodLiv3 - @voce.DescrLiv3
+                                </li>
+                            }
+                            @if (!string.IsNullOrEmpty(voce.CodLiv4))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 4:</strong><br />
+                                    @voce.CodLiv4 - @voce.DescrLiv4
+                                </li>
+                            }
+                            @if (!string.IsNullOrEmpty(voce.CodLiv5))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 5:</strong><br />
+                                    @voce.CodLiv5 - @voce.DescrLiv5
+                                </li>
+                            }
+                            @if (!string.IsNullOrEmpty(voce.CodLiv6))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 6:</strong><br />
+                                    @voce.CodLiv6 - @voce.DescrLiv6
+                                </li>
+                            }
+                            @if (!string.IsNullOrEmpty(voce.CodLiv7))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 7:</strong><br />
+                                    @voce.CodLiv7 - @voce.DescrLiv7
+                                </li>
+                            }
+                            @if (!string.IsNullOrEmpty(voce.CodLiv8))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 8:</strong><br />
+                                    @voce.CodLiv8 - @voce.DescrLiv8
+                                </li>
+                            }
+                            @if (!string.IsNullOrEmpty(voce.CodLiv9))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 9:</strong><br />
+                                    @voce.CodLiv9 - @voce.DescrLiv9
+                                </li>
+                            }
+                            @if (!string.IsNullOrEmpty(voce.CodLiv10))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 10:</strong><br />
+                                    @voce.CodLiv10 - @voce.DescrLiv10
+                                </li>
+                            }
+                            @if (!string.IsNullOrEmpty(voce.CodLiv11))
+                            {
+                                <li class="mb-2">
+                                    <strong>Livello 11:</strong><br />
+                                    @voce.CodLiv11 - @voce.DescrLiv11
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            Voce non trovata o errore nel caricamento.
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string CodiceVoce { get; set; } = "";
+
+    private VoceDTO? voce;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(CodiceVoce))
+        {
+            voce = await ApiClient.GetVoceDetailAsync(CodiceVoce);
+        }
+        isLoading = false;
+    }
+}

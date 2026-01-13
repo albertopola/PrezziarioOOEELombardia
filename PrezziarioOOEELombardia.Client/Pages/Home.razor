@@ -1,0 +1,97 @@
+﻿@page "/"
+@inject PrezziarioOOEELombardia.Client.Services.PrezziarioApiClient ApiClient
+
+<PageTitle>Prezziario OOEE Lombardia</PageTitle>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-4 mb-4">Prezziario OOEE Lombardia</h1>
+            <p class="lead mb-4">
+                WebApp per la ricerca e navigazione delle voci del prezziario delle Opere ed Opere Elettromeccaniche della Regione Lombardia.
+            </p>
+            
+            @if (!isDatabaseInitialized)
+            {
+                <div class="alert alert-warning" role="alert">
+                    <h4 class="alert-heading">Database non inizializzato</h4>
+                    <p>Il database non è ancora stato inizializzato. Per utilizzare l'applicazione, è necessario caricare i dati dal file XML.</p>
+                    <hr>
+                    <p class="mb-0">
+                        <button class="btn btn-primary" @onclick="InitializeDatabase" disabled="@isInitializing">
+                            @if (isInitializing)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Inizializzazione in corso...</span>
+                            }
+                            else
+                            {
+                                <span>Inizializza Database</span>
+                            }
+                        </button>
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="row mt-5">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="bi bi-diagram-3"></i> Navigazione TreeView
+                                </h5>
+                                <p class="card-text">Esplora la struttura gerarchica del prezziario navigando attraverso i livelli organizzativi.</p>
+                                <a href="/treeview" class="btn btn-primary">Vai al TreeView</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="bi bi-search"></i> Ricerca Avanzata
+                                </h5>
+                                <p class="card-text">Cerca voci specifiche utilizzando codici, parole chiave o descrizioni.</p>
+                                <a href="/search" class="btn btn-primary">Vai alla Ricerca</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-4" role="alert">
+                    <h5 class="alert-heading">Funzionalità principali:</h5>
+                    <ul class="list-unstyled text-start">
+                        <li>✓ Navigazione gerarchica su 11+ livelli</li>
+                        <li>✓ Ricerca per codice voce e descrizione</li>
+                        <li>✓ Ricerca intelligente dagli ultimi livelli</li>
+                        <li>✓ Dettaglio completo delle voci con risorse</li>
+                        <li>✓ Visualizzazione prezzi e unità di misura</li>
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isDatabaseInitialized = false;
+    private bool isInitializing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isDatabaseInitialized = await ApiClient.GetDatabaseStatusAsync();
+    }
+
+    private async Task InitializeDatabase()
+    {
+        isInitializing = true;
+        var success = await ApiClient.InitializeDatabaseAsync();
+        if (success)
+        {
+            isDatabaseInitialized = true;
+        }
+        isInitializing = false;
+    }
+}
