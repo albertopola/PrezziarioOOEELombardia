@@ -1,0 +1,87 @@
+@inject PrezziarioOOEELombardia.Client.Services.PrezziarioApiClient ApiClient
+@using PrezziarioOOEELombardia.Shared
+
+<div class="tree-node" style="margin-left: @($"{(Node.Level - 1) * 20}px")">
+    <div class="node-content d-flex align-items-center mb-2">
+        @if (Node.HasChildren && Node.Level < 12)
+        {
+            <button class="btn btn-sm btn-link me-2 p-0" @onclick="ToggleExpand" style="min-width: 20px;">
+                @if (isExpanded)
+                {
+                    <i class="bi bi-chevron-down"></i>
+                }
+                else
+                {
+                    <i class="bi bi-chevron-right"></i>
+                }
+            </button>
+            <span class="node-icon me-2">📂</span>
+        }
+        else
+        {
+            <span class="ms-4 me-2"></span>
+            <span class="node-icon me-2">📄</span>
+        }
+        
+        <span class="node-label" style="cursor: pointer;" @onclick="HandleClick">
+            <strong>@Node.Code</strong> - @Node.Description
+        </span>
+    </div>
+
+    @if (isExpanded && children != null)
+    {
+        <div class="children">
+            @foreach (var child in children)
+            {
+                <TreeNodeComponent Node="@child" OnNodeClick="OnNodeClick" />
+            }
+        </div>
+    }
+    
+    @if (isLoading)
+    {
+        <div class="ms-5 mb-2">
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+            <span class="ms-2">Caricamento...</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public TreeNodeDTO Node { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<TreeNodeDTO> OnNodeClick { get; set; }
+
+    private bool isExpanded = false;
+    private bool isLoading = false;
+    private List<TreeNodeDTO>? children;
+
+    private async Task ToggleExpand()
+    {
+        if (!Node.HasChildren || Node.Level >= 12)
+            return;
+
+        isExpanded = !isExpanded;
+
+        if (isExpanded && children == null)
+        {
+            isLoading = true;
+            children = await ApiClient.GetTreeChildrenAsync(Node.Level, Node.Code);
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleClick()
+    {
+        if (!Node.HasChildren)
+        {
+            await OnNodeClick.InvokeAsync(Node);
+        }
+        else
+        {
+            await ToggleExpand();
+        }
+    }
+}

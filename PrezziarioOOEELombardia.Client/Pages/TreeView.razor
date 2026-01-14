@@ -1,0 +1,54 @@
+@page "/treeview"
+@inject PrezziarioOOEELombardia.Client.Services.PrezziarioApiClient ApiClient
+@inject NavigationManager NavigationManager
+
+<PageTitle>TreeView - Prezziario OOEE Lombardia</PageTitle>
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">Navigazione Gerarchica</h2>
+    
+    @if (isLoading && rootNodes == null)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Caricamento...</span>
+            </div>
+            <p class="mt-2">Caricamento struttura...</p>
+        </div>
+    }
+    else if (rootNodes != null)
+    {
+        <div class="tree-container">
+            @foreach (var node in rootNodes)
+            {
+                <TreeNodeComponent Node="@node" OnNodeClick="HandleNodeClick" />
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Impossibile caricare la struttura gerarchica.
+        </div>
+    }
+</div>
+
+@code {
+    private List<PrezziarioOOEELombardia.Shared.TreeNodeDTO>? rootNodes;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        rootNodes = await ApiClient.GetTreeRootAsync();
+        isLoading = false;
+    }
+
+    private void HandleNodeClick(PrezziarioOOEELombardia.Shared.TreeNodeDTO node)
+    {
+        if (!node.HasChildren)
+        {
+            // Navigate to detail page for leaf nodes (actual voci)
+            NavigationManager.NavigateTo($"/voce/{node.Code}");
+        }
+    }
+}
