@@ -360,6 +360,10 @@ public class XmlParserService
                     break;
             }
         }
+        if (currentVoce != null)
+        {
+            vociList.Add(currentVoce);
+        }
 
         // Save remaining voci
         if (vociList.Any())

@@ -2,6 +2,9 @@ namespace PrezziarioOOEELombardia.Shared;
 
 public class VoceDTO
 {
+    public string Autore { get; set; } = string.Empty;
+    public string Anno { get; set; } = string.Empty;
+    public string Edizione { get; set; } = string.Empty;
     public string CodiceVoce { get; set; } = string.Empty;
     public decimal PrezzoVoce { get; set; }
     public string UnitaMisuraVoce { get; set; } = string.Empty;

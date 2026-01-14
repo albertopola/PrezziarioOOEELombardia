@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PrezziarioOOEELombardia.Server.Data;
 using PrezziarioOOEELombardia.Shared;
 
@@ -74,203 +74,176 @@ public class SearchService
 
         return voce != null ? MapToDTO(voce) : null;
     }
-
     public async Task<List<TreeNodeDTO>> GetTreeRootAsync()
     {
-        var roots = await _context.Voci
-            .Where(v => v.CodLiv1 != null)
-            .Select(v => new { v.CodLiv1, v.DescrLiv1 })
+        // Primo livello: Autore
+        var autori = await _context.Voci
+            .Where(v => !string.IsNullOrEmpty(v.Autore))
+            .Select(v => v.Autore)
             .Distinct()
             .ToListAsync();
 
-        return roots.Select(r => new TreeNodeDTO
+        return autori.Select(autore => new TreeNodeDTO
         {
-            Code = r.CodLiv1!,
-            Description = r.DescrLiv1 ?? "",
-            Level = 1,
+            Code = autore,
+            Description = autore,
+            Level = 0,
             HasChildren = true
         }).OrderBy(n => n.Code).ToList();
     }
 
     public async Task<List<TreeNodeDTO>> GetTreeChildrenAsync(int level, string code)
     {
-        if (level < 1 || level > 11)
-            return new List<TreeNodeDTO>();
+        _logger.LogWarning($"GetTreeChildrenAsync: level={level}, code={code}");
 
-        List<TreeNodeDTO> nodes;
+        // Split la chiave pipe, es: "LOM|25|2|RM|87|10|15|Za001"
+        var keys = code.Split('|');
+        string autore = keys.Length > 0 ? keys[0] : "";
+        string anno = keys.Length > 1 ? keys[1] : "";
+        string edizione = keys.Length > 2 ? keys[2] : "";
 
-        switch (level)
+        // Mappa livelli database
+        string[] codLivNames = new[] {
+        "CodLiv1", "CodLiv2", "CodLiv3", "CodLiv4", "CodLiv5",
+        "CodLiv6", "CodLiv7", "CodLiv8", "CodLiv9", "CodLiv10", "CodLiv11"
+    };
+        string[] descrLivNames = new[] {
+        "DescrLiv1", "DescrLiv2", "DescrLiv3", "DescrLiv4", "DescrLiv5",
+        "DescrLiv6", "DescrLiv7", "DescrLiv8", "DescrLiv9", "DescrLiv10", "DescrLiv11"
+    };
+
+        // Level:
+        // 0: Autore --> restituisci Anni
+        if (level == 0)
         {
-            case 1:
-                var level2 = await _context.Voci
-                    .Where(v => v.CodLiv1 == code && v.CodLiv2 != null)
-                    .Select(v => new { v.CodLiv2, v.DescrLiv2 })
-                    .Distinct()
-                    .ToListAsync();
-                nodes = level2.Select(n => new TreeNodeDTO
-                {
-                    Code = n.CodLiv2!,
-                    Description = n.DescrLiv2 ?? "",
-                    Level = 2,
-                    HasChildren = true
-                }).ToList();
-                break;
+            var anni = await _context.Voci
+                .Where(v => v.Autore == autore && (!string.IsNullOrEmpty(v.Anno)))
+                .Select(v => v.Anno)
+                .Distinct()
+                .ToListAsync();
+            _logger.LogWarning($"ANNI trovati per autore={autore}: {string.Join(",", anni)}");
 
-            case 2:
-                var level3 = await _context.Voci
-                    .Where(v => v.CodLiv2 == code && v.CodLiv3 != null)
-                    .Select(v => new { v.CodLiv3, v.DescrLiv3 })
-                    .Distinct()
-                    .ToListAsync();
-                nodes = level3.Select(n => new TreeNodeDTO
-                {
-                    Code = n.CodLiv3!,
-                    Description = n.DescrLiv3 ?? "",
-                    Level = 3,
-                    HasChildren = true
-                }).ToList();
-                break;
-
-            case 3:
-                var level4 = await _context.Voci
-                    .Where(v => v.CodLiv3 == code && v.CodLiv4 != null)
-                    .Select(v => new { v.CodLiv4, v.DescrLiv4 })
-                    .Distinct()
-                    .ToListAsync();
-                nodes = level4.Select(n => new TreeNodeDTO
-                {
-                    Code = n.CodLiv4!,
-                    Description = n.DescrLiv4 ?? "",
-                    Level = 4,
-                    HasChildren = true
-                }).ToList();
-                break;
-
-            case 4:
-                var level5 = await _context.Voci
-                    .Where(v => v.CodLiv4 == code && v.CodLiv5 != null)
-                    .Select(v => new { v.CodLiv5, v.DescrLiv5 })
-                    .Distinct()
-                    .ToListAsync();
-                nodes = level5.Select(n => new TreeNodeDTO
-                {
-                    Code = n.CodLiv5!,
-                    Description = n.DescrLiv5 ?? "",
-                    Level = 5,
-                    HasChildren = true
-                }).ToList();
-                break;
-
-            case 5:
-                var level6 = await _context.Voci
-                    .Where(v => v.CodLiv5 == code && v.CodLiv6 != null)
-                    .Select(v => new { v.CodLiv6, v.DescrLiv6 })
-                    .Distinct()
-                    .ToListAsync();
-                nodes = level6.Select(n => new TreeNodeDTO
-                {
-                    Code = n.CodLiv6!,
-                    Description = n.DescrLiv6 ?? "",
-                    Level = 6,
-                    HasChildren = true
-                }).ToList();
-                break;
-
-            case 6:
-                var level7 = await _context.Voci
-                    .Where(v => v.CodLiv6 == code && v.CodLiv7 != null)
-                    .Select(v => new { v.CodLiv7, v.DescrLiv7 })
-                    .Distinct()
-                    .ToListAsync();
-                nodes = level7.Select(n => new TreeNodeDTO
-                {
-                    Code = n.CodLiv7!,
-                    Description = n.DescrLiv7 ?? "",
-                    Level = 7,
-                    HasChildren = true
-                }).ToList();
-                break;
-
-            case 7:
-                var level8 = await _context.Voci
-                    .Where(v => v.CodLiv7 == code && v.CodLiv8 != null)
-                    .Select(v => new { v.CodLiv8, v.DescrLiv8 })
-                    .Distinct()
-                    .ToListAsync();
-                nodes = level8.Select(n => new TreeNodeDTO
-                {
-                    Code = n.CodLiv8!,
-                    Description = n.DescrLiv8 ?? "",
-                    Level = 8,
-                    HasChildren = true
-                }).ToList();
-                break;
-
-            case 8:
-                var level9 = await _context.Voci
-                    .Where(v => v.CodLiv8 == code && v.CodLiv9 != null)
-                    .Select(v => new { v.CodLiv9, v.DescrLiv9 })
-                    .Distinct()
-                    .ToListAsync();
-                nodes = level9.Select(n => new TreeNodeDTO
-                {
-                    Code = n.CodLiv9!,
-                    Description = n.DescrLiv9 ?? "",
-                    Level = 9,
-                    HasChildren = true
-                }).ToList();
-                break;
-
-            case 9:
-                var level10 = await _context.Voci
-                    .Where(v => v.CodLiv9 == code && v.CodLiv10 != null)
-                    .Select(v => new { v.CodLiv10, v.DescrLiv10 })
-                    .Distinct()
-                    .ToListAsync();
-                nodes = level10.Select(n => new TreeNodeDTO
-                {
-                    Code = n.CodLiv10!,
-                    Description = n.DescrLiv10 ?? "",
-                    Level = 10,
-                    HasChildren = true
-                }).ToList();
-                break;
-
-            case 10:
-                var level11 = await _context.Voci
-                    .Where(v => v.CodLiv10 == code && v.CodLiv11 != null)
-                    .Select(v => new { v.CodLiv11, v.DescrLiv11 })
-                    .Distinct()
-                    .ToListAsync();
-                nodes = level11.Select(n => new TreeNodeDTO
-                {
-                    Code = n.CodLiv11!,
-                    Description = n.DescrLiv11 ?? "",
-                    Level = 11,
-                    HasChildren = true
-                }).ToList();
-                break;
-
-            case 11:
-                var voci = await _context.Voci
-                    .Where(v => v.CodLiv11 == code)
-                    .Select(v => new { v.CodiceVoce, v.DeclaratoriaVoce })
-                    .ToListAsync();
-                nodes = voci.Select(v => new TreeNodeDTO
-                {
-                    Code = v.CodiceVoce,
-                    Description = v.DeclaratoriaVoce,
-                    Level = 12,
-                    HasChildren = false
-                }).ToList();
-                break;
-
-            default:
-                nodes = new List<TreeNodeDTO>();
-                break;
+            return anni.Select(a => new TreeNodeDTO
+            {
+                Code = $"{autore}|{a}",
+                Description = "20" + a,
+                Level = 1,
+                HasChildren = true
+            }).OrderBy(n => n.Code).ToList();
         }
 
-        return nodes.OrderBy(n => n.Code).ToList();
+        // 1: Anno --> Edizioni
+        if (level == 1)
+        {
+            var edizioni = await _context.Voci
+                .Where(v => v.Autore == autore && v.Anno == anno && !string.IsNullOrEmpty(v.Edizione))
+                .Select(v => v.Edizione)
+                .Distinct()
+                .ToListAsync();
+
+            return edizioni.Select(e => new TreeNodeDTO
+            {
+                Code = $"{autore}|{anno}|{e}",
+                Description = "Edizione " + e,
+                Level = 2,
+                HasChildren = true
+            }).OrderBy(n => n.Code).ToList();
+        }
+
+        // 2: Edizione --> Livello 1
+        if (level == 2)
+        {
+            var liv1 = await _context.Voci
+                .Where(v => v.Autore == autore && v.Anno == anno && v.Edizione == edizione && v.CodLiv1 != null)
+                .GroupBy(v => new { v.CodLiv1, v.DescrLiv1 })
+                .Select(g => new TreeNodeDTO
+                {
+                    Code = $"{autore}|{anno}|{edizione}|{g.Key.CodLiv1}",
+                    Description = g.Key.DescrLiv1 ?? "",
+                    Level = 3,
+                    HasChildren = true
+                })
+                .OrderBy(n => n.Code)
+                .ToListAsync();
+
+            return liv1;
+        }
+
+        // Dal livello 3 in poi, mappiamo ai livelli CodLivX (X: 2..11)
+        if (level >= 3 && level < 13)
+        {
+            // Determine quanti livelli di CodLiv sono passati nella chiave
+            int currentLivIndex = level - 3; // 3 -> CodLiv2, 4 -> CodLiv3, ..., 13 -> CodLiv12 (non esiste, gestito dopo)
+            if (currentLivIndex >= 0 && currentLivIndex < codLivNames.Length)
+            {
+                // Prepara i valori precedenti per la WHERE
+                var query = _context.Voci.AsQueryable();
+
+                query = query.Where(v =>
+                    v.Autore == autore &&
+                    v.Anno == anno &&
+                    v.Edizione == edizione);
+
+                // Applica tutti i CodLiv precedenti
+                for (int i = 0; i < currentLivIndex; i++)
+                {
+                    var codValue = keys.Length > 3 + i ? keys[3 + i] : null;
+                    string codLiv = codLivNames[i];
+                    if (!string.IsNullOrEmpty(codValue))
+                    {
+                        query = query.Where(v => EF.Property<string>(v, codLiv) == codValue);
+                    }
+                }
+
+                string codLivCurrent = codLivNames[currentLivIndex];
+                string descrLivCurrent = descrLivNames[currentLivIndex];
+
+                // Lista prossimi codici disponibili a questo livello
+                var gruppi = await query
+                    .Where(v => EF.Property<string>(v, codLivCurrent) != null)
+                    .GroupBy(v => new
+                    {
+                        Cod = EF.Property<string>(v, codLivCurrent),
+                        Descr = EF.Property<string>(v, descrLivCurrent)
+                    })
+                    .Select(g => new TreeNodeDTO
+                    {
+                        Code = code + "|" + g.Key.Cod,
+                        Description = g.Key.Descr ?? "",
+                        Level = level + 1,
+                        HasChildren = true
+                    })
+                    .OrderBy(n => n.Code)
+                    .ToListAsync();
+
+                // Se non ci sono figli, mostra direttamente le voci (foglie)
+                if (!gruppi.Any())
+                {
+                    var voci = await query
+                        .Where(v =>
+                            // serve che i codici precedenti matchino!
+                            (EF.Property<string>(v, codLivCurrent) == null) &&
+                            !string.IsNullOrEmpty(v.CodiceVoce)
+                        )
+                        .Select(v => new TreeNodeDTO
+                        {
+                            Code = v.CodiceVoce,
+                            Description = v.DeclaratoriaVoce,
+                            Level = 12,
+                            HasChildren = false
+                        })
+                        .OrderBy(n => n.Code)
+                        .ToListAsync();
+
+                    return voci;
+                }
+
+                return gruppi;
+            }
+        }
+
+        // fallback vuoto
+        return new List<TreeNodeDTO>();
     }
 
     private IQueryable<Voce> ApplyLevelFilter(IQueryable<Voce> query, int level)
@@ -296,6 +269,12 @@ public class SearchService
     {
         return new VoceDTO
         {
+            // Nuovi campi
+            Autore = voce.Autore,
+            Anno = voce.Anno,
+            Edizione = voce.Edizione,
+
+            // Campi già presenti
             CodiceVoce = voce.CodiceVoce,
             PrezzoVoce = voce.PrezzoVoce,
             UnitaMisuraVoce = voce.UnitaMisuraVoce,

@@ -6,8 +6,7 @@
 
 <div class="container-fluid mt-4">
     <h2 class="mb-4">Navigazione Gerarchica</h2>
-    
-    @if (isLoading && rootNodes == null)
+    @if (isLoading)
     {
         <div class="text-center">
             <div class="spinner-border text-primary" role="status">
@@ -16,7 +15,7 @@
             <p class="mt-2">Caricamento struttura...</p>
         </div>
     }
-    else if (rootNodes != null)
+    else if (rootNodes != null && rootNodes.Any())
     {
         <div class="tree-container">
             @foreach (var node in rootNodes)
