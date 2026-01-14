@@ -1,8 +1,16 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using PrezziarioOOEELombardia.Server.Data;
 using PrezziarioOOEELombardia.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Aumenta i timeout di Kestrel
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(30);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(30);
+});
 
 // Add services to the container
 builder.Services.AddControllers();

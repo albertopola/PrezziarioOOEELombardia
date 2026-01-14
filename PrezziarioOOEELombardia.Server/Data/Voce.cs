@@ -3,6 +3,12 @@ namespace PrezziarioOOEELombardia.Server.Data;
 public class Voce
 {
     public int Id { get; set; }
+
+    // Riferimenti voce
+    public string Autore { get; set; } = string.Empty;
+    public string Anno { get; set; } = string.Empty; // "25" invece di "2025"
+    public string Edizione { get; set; } = string.Empty;
+
     public string CodiceVoce { get; set; } = string.Empty;
     public decimal PrezzoVoce { get; set; }
     public string UnitaMisuraVoce { get; set; } = string.Empty;
@@ -11,7 +17,7 @@ public class Voce
     public string TipologiaRisorsa { get; set; } = string.Empty;
     public string DeclaratoriaVoce { get; set; } = string.Empty;
     public string DeclaratoriaVoceDettaglio { get; set; } = string.Empty;
-    
+
     // Livelli gerarchici
     public string? CodLiv1 { get; set; }
     public string? DescrLiv1 { get; set; }
@@ -35,6 +41,6 @@ public class Voce
     public string? DescrLiv10 { get; set; }
     public string? CodLiv11 { get; set; }
     public string? DescrLiv11 { get; set; }
-    
+
     public List<Risorsa> Risorse { get; set; } = new();
 }
